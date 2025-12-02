@@ -23,12 +23,10 @@ int solve(const char *fname) {
 
     s = (c == 'L') ? -1 : 1;
 
-    pw += (n / 100);
-    n = n % 100;
+    pw += (n / 100), n = n % 100;
     t = p + s * n;
     pw += (p * t < 0) || ((p - 100) * (t > 100) < 0);
-    p = (t + 100) % 100;
-    pw += (p == 0);
+    p = (t + 100) % 100, pw += (p == 0);
   }
 
   fclose(fp);
@@ -40,12 +38,8 @@ int main(int argc, char *argv[]) {
   char fname[PATH_MAX + 4];
   strncpy(fname, argv[0], PATH_MAX);
 
-  int mode = 0;
-  if (argc == 2) mode = atoi(argv[1]);
-
-  char *ext = ".in";
-  if (mode) ext = ".ex";
-
+  int ex = (argc == 2) ? atoi(argv[1]) : 0;
+  char *ext = ex ? ".ex" : ".in";
   printf("%d\n", solve(strncat(fname, ext, 3)));
 
   return 0;

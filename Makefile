@@ -1,7 +1,6 @@
 CC=gcc
 CFLAGS=-g -O2
-
-BINS=01
+BINS=01a
 
 all: $(BINS)
 

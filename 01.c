@@ -22,13 +22,10 @@ int solve(const char *fname) {
   abort(!fp, "Unable to open input file!");
 
   char line[BUFSIZ], c;
-  int n;
-  int pos = 50;
-  int password = 0;
+  int n, pos = 50, password = 0;
   while (fgets(line, BUFSIZ, fp)) {
     sscanf(line, "%c%d\n", &c, &n);
-    pos = rotate(pos, c, n);
-    password += (pos == 0);
+    pos = rotate(pos, c, n), password += (pos == 0);
   }
 
   fclose(fp);

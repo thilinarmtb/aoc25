@@ -2,7 +2,7 @@ ARGS?=
 
 CC=gcc
 CFLAGS=-g -O2
-BINS=01a 01b
+BINS=01a 01b 02a
 
 all: $(BINS)
 

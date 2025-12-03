@@ -9,6 +9,9 @@ all: $(BINS)
 run_%: %
 	@./$< $(ARGS)
 
+format:
+	clang-format -i *.c
+
 clean:
 	@$(RM) -rf *.dSYM $(BINS)
 

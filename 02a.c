@@ -6,13 +6,13 @@
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 
-#define abort(cond, msg)    \
-  do {                      \
-    if (cond) {             \
-      fprintf(stderr, msg); \
-      exit(EXIT_FAILURE);   \
-    }                       \
-  } while(0)
+#define abort(cond, msg)                                                       \
+  do {                                                                         \
+    if (cond) {                                                                \
+      fprintf(stderr, msg);                                                    \
+      exit(EXIT_FAILURE);                                                      \
+    }                                                                          \
+  } while (0)
 
 typedef unsigned long long ulong;
 typedef unsigned uint;
@@ -25,15 +25,14 @@ ulong powi(ulong b, uint e) {
 
 ulong rsum(const char *fid, const char *sid) {
   ulong f = atoll(fid), s = atoll(sid);
-  
+
   ulong sum = 0;
   for (uint l = MIN(2, strlen(fid)); l <= strlen(sid); l++) {
     uint h = (l + 1) / 2;
     ulong d = powi(10, h) + 1;
     ulong mr = MAX(powi(10, h - 1), f / d + ((f % d) != 0));
     ulong Mr = MIN(powi(10, h) - 1, s / d);
-    if (mr <= Mr)
-      sum += ((Mr + mr) * (Mr - mr + 1) * d) / 2;
+    if (mr <= Mr) sum += ((Mr + mr) * (Mr - mr + 1) * d) / 2;
     l++;
   }
 

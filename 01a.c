@@ -4,13 +4,13 @@
 
 #define PATH_MAX 4096
 
-#define abort(cond, msg)    \
-  do {                      \
-    if (cond) {             \
-      fprintf(stderr, msg); \
-      exit(EXIT_FAILURE);   \
-    }                       \
-  } while(0)
+#define abort(cond, msg)                                                       \
+  do {                                                                         \
+    if (cond) {                                                                \
+      fprintf(stderr, msg);                                                    \
+      exit(EXIT_FAILURE);                                                      \
+    }                                                                          \
+  } while (0)
 
 int solve(const char *fname) {
   FILE *fp = fopen(fname, "r");

@@ -13,7 +13,7 @@ format:
 	clang-format -i *.c
 
 clean:
-	@$(RM) -rf *.dSYM $(BINS)
+	@$(RM) -rf $(BINS) *.dSYM *.swp
 
 %: %.c
 	$(CC) $(CFLAGS) $< -o $@

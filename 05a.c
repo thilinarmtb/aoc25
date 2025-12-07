@@ -1,4 +1,3 @@
-#include <assert.h>
 #include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -28,8 +27,7 @@ typedef struct {
 } Array_t, *Array;
 
 void arr_init_(Array arr, u64 max, u64 us) {
-  arr->max = max, arr->n = 0;
-  arr->ptr = calloc(max, us);
+  arr->max = max, arr->n = 0, arr->ptr = calloc(max, us);
 }
 #define arr_init(T, arr, max) arr_init_(arr, max, sizeof(T))
 
@@ -52,8 +50,7 @@ int cmp(const void *a_, const void *b_) {
   const Range a = (const Range)a_;
   const Range b = (const Range)b_;
   if (a->a < b->a) return -1;
-  if (a->a == b->a) return 0;
-  return 1;
+  return !(a->a == b->a);
 }
 
 // do a binary search to find the correct range.
@@ -84,7 +81,6 @@ u64 solve(const char *fname) {
   Range_t r;
   while (strlen(fgets(line, BUFSIZ, fp)) > 1) {
     r.a = atoll(strtok(line, delims)), r.b = atoll(strtok(0, delims));
-    assert(r.a <= r.b);
     arr_cat(Range_t, &A, &r, 1);
   }
 
@@ -108,7 +104,7 @@ u64 solve(const char *fname) {
   u32 sum = 0;
   while (fgets(line, BUFSIZ, fp)) sum += fresh(atoll(line), &A);
 
-  arr_free(&A);
+  fclose(fp), arr_free(&A);
 
   return sum;
 }

@@ -22,8 +22,7 @@ typedef int64_t i64;
 typedef int32_t i32;
 
 u32 space(char *s) {
-  u32 l = strlen(s);
-  u32 n = 0;
+  u32 l = strlen(s), n = 0;
   while (n < l && s[n] != ' ') n++;
   return (strlen(s) != n) ? n : n - 1;
 }
@@ -42,13 +41,9 @@ u64 do_problem(char *s[], u32 L, u32 *o) {
     u32 d = 0;
     for (u32 l = 0; l < (L - 1); l++) {
       char c = s[l][*o + w];
-      if (c == ' ') continue;
-      d = 10 * d + c - '0';
+      d = (c == ' ') ? d : (10 * d + c - '0');
     }
-    if (op == '+')
-      sum += d;
-    else
-      sum *= d;
+    sum = (op == '+') ? (sum + d) : (sum * d);
   }
 
   (*o) += (W + 1); /* + 1 is for the space */
@@ -60,9 +55,8 @@ u64 solve(const char *fname) {
   FILE *fp = fopen(fname, "r");
   abort(!fp, "Unable to open input file!");
 
-  char line[8 * BUFSIZ], *delims = " \n";
-  char *lines[1024];
-  u64 L = 0;
+  char line[8 * BUFSIZ], *lines[1024], *delims = " \n";
+  u32 L = 0;
   while (fgets(line, 8 * BUFSIZ, fp)) {
     u32 S = strlen(line);
     lines[L] = calloc(S + 1, sizeof(char));

@@ -100,17 +100,17 @@ u64 solve(const char *fname, u32 max_conns) {
   u32 *circuit = calloc(boxes.n, sizeof(u32));
   u32 ncircuits = 0;
   for (u64 n = 0; n < max_conns; n++) {
-    Edge_t e = ep[n];
-    u32 ci = circuit[e.i], cj = circuit[e.j];
+    Edge e = &ep[n];
+    u32 ci = circuit[e->i], cj = circuit[e->j];
 
     if (ci == 0 && cj == 0) {
       ncircuits++;
-      circuit[e.i] = ncircuits;
-      circuit[e.j] = ncircuits;
+      circuit[e->i] = ncircuits;
+      circuit[e->j] = ncircuits;
     } else if (ci != 0 && cj == 0) {
-      circuit[e.j] = ci;
+      circuit[e->j] = ci;
     } else if (ci == 0 && cj != 0) {
-      circuit[e.i] = cj;
+      circuit[e->i] = cj;
     } else if (ci != cj) {
       u32 cmin = MIN(ci, cj);
       u32 cmax = MAX(ci, cj);

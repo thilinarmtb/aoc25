@@ -56,13 +56,8 @@ typedef struct {
 } Node_t, *Node;
 
 int cmp_distance(const void *a, const void *b) {
-<<<<<<< HEAD
   Edge ea = (Edge)a, eb = (Edge)b;
   return (ea->d < eb->d ? -1 : (ea->d > eb->d ? 1 : 0));
-=======
-  Edge da = (Edge)a, db = (Edge)b;
-  return da->d - db->d;
->>>>>>> fd343b3 (Refactor 08a)
 }
 
 int cmp_nodes(const void *a, const void *b) {

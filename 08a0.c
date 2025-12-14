@@ -53,7 +53,7 @@ typedef struct {
 
 int cmp_edges(const void *a, const void *b) {
   Edge ea = (Edge)a, eb = (Edge)b;
-  return ea->d - eb->d;
+  return (ea->d < eb->d ? -1 : (ea->d > eb->d ? 1 : 0));
 }
 
 int cmp_u64(const void *a, const void *b) {

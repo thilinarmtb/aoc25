@@ -51,28 +51,14 @@ typedef struct {
   i64 i, j, d;
 } Edge_t, *Edge;
 
-typedef struct {
-  i64 u, v, i;
-} Node_t, *Node;
-
-int cmp_distance(const void *a, const void *b) {
-  Edge da = (Edge)a, db = (Edge)b;
-  return da->d - db->d;
+int cmp_edges(const void *a, const void *b) {
+  Edge ea = (Edge)a, eb = (Edge)b;
+  return (ea->d < eb->d ? -1 : (ea->d > eb->d ? 1 : 0));
 }
 
-int cmp_nodes(const void *a, const void *b) {
-  Node na = (Node)a, nb = (Node)b;
-  return na->u - nb->u;
-}
-
-int cmp_node_indices(const void *a, const void *b) {
-  Node ua = (Node)a, ub = (Node)b;
-  return ua->i - ub->i;
-}
-
-int cmp_u64_reverse(const void *a, const void *b) {
+int cmp_u64(const void *a, const void *b) {
   u64 ua = *(u64 *)a, ub = *(u64 *)b;
-  return (ua < ub) ? 1 : ((ua > ub) ? -1 : 0);
+  return (ua < ub) ? -1 : ((ua > ub) ? 1 : 0);
 }
 
 i64 xn(i64 x, u32 n) {
@@ -81,7 +67,7 @@ i64 xn(i64 x, u32 n) {
   return r;
 }
 
-u64 solve(const char *fname, u32 npairs) {
+u64 solve(const char *fname, u32 max_conns) {
   FILE *fp = fopen(fname, "r");
   abort(!fp, "Unable to open input file!");
 
@@ -98,105 +84,50 @@ u64 solve(const char *fname, u32 npairs) {
 
   Array_t edges;
   arr_init(Edge_t, &edges, 1000);
-
-  Box pb = (Box)boxes.ptr;
+  Box bp = (Box)boxes.ptr;
   for (u64 i = 0; i < boxes.n; i++) {
     for (u64 j = i + 1; j < boxes.n; j++) {
-      i64 d = xn(pb[i].x - pb[j].x, 2) + xn(pb[i].y - pb[j].y, 2) +
-              xn(pb[i].z - pb[j].z, 2);
+      i64 d = xn(bp[i].x - bp[j].x, 2) + xn(bp[i].y - bp[j].y, 2) +
+              xn(bp[i].z - bp[j].z, 2);
       Edge_t e = {.i = i, .j = j, .d = d};
       arr_cat(Edge_t, &edges, &e, 1);
     }
   }
-  assert(edges.n == (boxes.n * (boxes.n - 1)) / 2);
 
-  /* first sort by distance */
-  qsort(edges.ptr, edges.n, sizeof(Edge_t), cmp_distance);
+  qsort(edges.ptr, edges.n, sizeof(Edge_t), cmp_edges);
 
-  /* renumber the nodes to be contiguous from 0 */
-  Array_t nodes;
-  arr_init(Node_t, &nodes, 2 * npairs);
+  Edge ep = (Edge)edges.ptr;
+  u32 *circuit = calloc(boxes.n, sizeof(u32));
+  u32 ncircuits = 0;
+  for (u64 n = 0; n < max_conns; n++) {
+    Edge_t e = ep[n];
+    u32 ci = circuit[e.i], cj = circuit[e.j];
 
-  /* Add nodes to an array and sort them */
-  Edge pe = (Edge)edges.ptr;
-  for (u64 i = 0; i < npairs; i++) {
-    Node_t ni = {.u = pe[i].i, .i = i};
-    arr_cat(Node_t, &nodes, &ni, 1);
-    Node_t nj = {.u = pe[i].j, .i = i};
-    arr_cat(Node_t, &nodes, &nj, 1);
-  }
-
-  qsort(nodes.ptr, nodes.n, sizeof(Node_t), cmp_nodes);
-
-  /* renumber the node values */
-  i64 N = 0;
-  u64 s = 0;
-  Node pn = (Node)nodes.ptr;
-  while (s < nodes.n) {
-    i64 u = pn[s].u;
-    while (s < nodes.n && pn[s].u == u) pn[s].u = N, s++;
-    N++;
-  }
-
-  /* sort the nodes back to the original order */
-  qsort(nodes.ptr, nodes.n, sizeof(Node_t), cmp_node_indices);
-
-  /* reconstruct the edges with the new node numbers  and use it to construct
-   * the adjacency matrix */
-  u64 *adj = calloc(N * N, sizeof(u64));
-  pn = (Node)nodes.ptr;
-  for (u64 i = 0; i < npairs; i++) {
-    u64 u = pn[2 * i].u;
-    u64 v = pn[2 * i + 1].u;
-    adj[u * N + v] = adj[v * N + u] = 1;
-  }
-
-  /* Now find the connected components by the most inefficient way possible --
-   * by adjacency matrix times a seed vector multiplication until convergence */
-  u32 seed = 1;
-  u32 *found = calloc(N, sizeof(u32));
-  u32 *x = calloc(N, sizeof(u32));
-  u32 *y = calloc(N, sizeof(u32));
-
-  for (u64 k = 0; k < N; k++) {
-    if (found[k] > 0) continue;
-
-    found[k] = seed;
-    for (u64 i = 0; i < N; i++) x[i] = 0;
-    x[k] = 1;
-
-    u64 c0 = 0, c1 = 1;
-    while (c0 < c1) {
-      for (u64 i = 0; i < N; i++) {
-        y[i] = 0;
-        for (u64 j = 0; j < N; j++) y[i] += adj[i * N + j] * x[j];
-      }
-
-      for (u64 i = 0; i < N; i++) {
-        found[i] = (found[i] > 0) ? found[i] : ((y[i] > 0) ? seed : 0);
-        x[i] = (found[i] == seed);
-      }
-
-      c0 = c1, c1 = 0;
-      for (u64 i = 0; i < N; i++) c1 += (found[i] > 0);
+    if (ci == 0 && cj == 0) {
+      ncircuits++;
+      circuit[e.i] = ncircuits;
+      circuit[e.j] = ncircuits;
+    } else if (ci != 0 && cj == 0) {
+      circuit[e.j] = ci;
+    } else if (ci == 0 && cj != 0) {
+      circuit[e.i] = cj;
+    } else if (ci != cj) {
+      u32 cmin = MIN(ci, cj);
+      u32 cmax = MAX(ci, cj);
+      for (u64 k = 0; k < boxes.n; k++)
+        if (circuit[k] == cmax) circuit[k] = cmin;
     }
-
-    seed++;
   }
 
-  u64 *sizes = calloc(seed, sizeof(u64));
-  for (u32 s = 1; s < seed; s++) {
-    u64 c = 0;
-    for (u64 i = 0; i < N; i++)
-      if (found[i] == s) c++;
-    sizes[s - 1] = c;
-  }
-  qsort(sizes, seed - 1, sizeof(u64), cmp_u64_reverse);
+  u64 *sizes = calloc(ncircuits + 1, sizeof(u64));
+  for (u64 i = 0; i < boxes.n; i++) sizes[circuit[i]]++;
 
-  u64 A = sizes[0] * sizes[1] * sizes[2];
+  /* exclude size 0 */
+  qsort(sizes + 1, ncircuits, sizeof(u64), cmp_u64);
+  u64 A = sizes[ncircuits] * sizes[ncircuits - 1] * sizes[ncircuits - 2];
 
-  arr_free(&boxes), arr_free(&edges), arr_free(&nodes);
-  free(adj), free(found), free(x), free(y), free(sizes);
+  arr_free(&boxes), arr_free(&edges);
+  free(circuit), free(sizes);
 
   return A;
 }
@@ -207,8 +138,8 @@ int main(int argc, char *argv[]) {
 
   i32 ex = (argc == 2) ? atoi(argv[1]) : 0;
   char *ext = ex ? ".ex" : ".in";
-  u32 npairs = ex ? 10 : 1000;
-  printf("%llu\n", solve(strncat(fname, ext, 3), npairs));
+  u32 max_conns = ex ? 10 : 1000;
+  printf("%llu\n", solve(strncat(fname, ext, 3), max_conns));
 
   return 0;
 }

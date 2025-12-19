@@ -59,15 +59,12 @@ int cmp(const void *a, const void *b) {
 }
 
 int inside_bbox(Tile p0, Tile p1, Array bbox) {
-  i64 miny = MIN(p0->y, p1->y);
-  i64 maxy = MAX(p0->y, p1->y);
-  i64 minx = MIN(p0->x, p1->x);
-  i64 maxx = MAX(p0->x, p1->x);
+  i64 miny = MIN(p0->y, p1->y), maxy = MAX(p0->y, p1->y);
+  i64 minx = MIN(p0->x, p1->x), maxx = MAX(p0->x, p1->x);
 
   Tile bp = (Tile)bbox->ptr;
   u32 s = 0;
   while (s < bbox->n && bp[s].y < miny) s += 2;
-  assert(s < bbox->n && bp[s].y == miny);
   for (u32 i = s; i < bbox->n && bp[i].y <= maxy; i += 2)
     if (bp[i].x > minx || bp[i + 1].x < maxx) return 0;
   return 1;
@@ -96,16 +93,11 @@ u64 solve(const char *fname) {
 
   Tile tp = (Tile)tiles.ptr;
   for (u32 i = 0; i < tiles.n - 1; i++) {
-    i64 minx = MIN(tp[i].x, tp[i + 1].x);
-    i64 maxx = MAX(tp[i].x, tp[i + 1].x);
-    i64 miny = MIN(tp[i].y, tp[i + 1].y);
-    i64 maxy = MAX(tp[i].y, tp[i + 1].y);
-    for (i64 x = minx; x <= maxx; x++) {
-      for (i64 y = miny; y <= maxy; y++) {
-        t.x = x, t.y = y;
-        arr_cat(Tile_t, &ranges, &t, 1);
-      }
-    }
+    i64 minx = MIN(tp[i].x, tp[i + 1].x), maxx = MAX(tp[i].x, tp[i + 1].x);
+    i64 miny = MIN(tp[i].y, tp[i + 1].y), maxy = MAX(tp[i].y, tp[i + 1].y);
+    for (i64 x = minx; x <= maxx; x++)
+      for (i64 y = miny; y <= maxy; y++)
+        t.x = x, t.y = y, arr_cat(Tile_t, &ranges, &t, 1);
   }
 
   /* sort tiles first by y then by x */
@@ -119,7 +111,6 @@ u64 solve(const char *fname) {
   while (s < ranges.n - 1) {
     u32 e = s + 1;
     while (e < ranges.n && rp[e].y == rp[s].y) e++;
-    assert((e - 1) > s);
     arr_cat(Tile_t, &bbox, &rp[s], 1);
     arr_cat(Tile_t, &bbox, &rp[e - 1], 1);
     s = e;
@@ -127,12 +118,10 @@ u64 solve(const char *fname) {
 
 #define AREA(a, b) ((absi((a).x - (b).x) + 1) * (absi((a).y - (b).y) + 1))
   u64 A = 0;
-  for (u32 i = 0; i < tiles.n; i++) {
-    for (u32 j = i + 1; j < tiles.n; j++) {
+  for (u32 i = 0; i < tiles.n; i++)
+    for (u32 j = i + 1; j < tiles.n; j++)
       if (inside_bbox(tp + i, tp + j, &bbox) && AREA(tp[i], tp[j]) > A)
         A = AREA(tp[i], tp[j]);
-    }
-  }
 
   arr_free(&tiles), arr_free(&ranges), arr_free(&bbox);
 

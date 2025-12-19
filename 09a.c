@@ -64,13 +64,12 @@ u64 solve(const char *fname) {
   }
   fclose(fp);
 
+#define AREA(a, b) ((absi((a).x - (b).x) + 1) * (absi((a).y - (b).y) + 1))
   u64 A = 0;
   Tile tp = (Tile)tiles.ptr;
-  for (u32 i = 0; i < tiles.n; i++) {
+  for (u32 i = 0; i < tiles.n; i++)
     for (u32 j = i + 1; j < tiles.n; j++)
-      if ((absi(tp[i].x - tp[j].x + 1) * absi(tp[i].y - tp[j].y + 1)) > A)
-        A = absi(tp[i].x - tp[j].x + 1) * absi(tp[i].y - tp[j].y + 1);
-  }
+      if (AREA(tp[i], tp[j]) > A) A = AREA(tp[i], tp[j]);
 
   arr_free(&tiles);
 

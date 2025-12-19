@@ -1,0 +1,143 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define PATH_MAX 4096
+
+#define abort(cond, msg)                                                       \
+  do {                                                                         \
+    if (cond) {                                                                \
+      fprintf(stderr, msg);                                                    \
+      exit(EXIT_FAILURE);                                                      \
+    }                                                                          \
+  } while (0)
+
+typedef uint64_t u64;
+typedef uint32_t u32;
+typedef int64_t i64;
+typedef int32_t i32;
+
+i64 powi(i64 b, u32 e) {
+  i64 r = 1;
+  while (e) r *= b, e--;
+  return r;
+}
+
+u64 absi(i64 a) { return (a < 0) ? -a : a; }
+
+typedef struct {
+  u64 max, n;
+  void *ptr;
+} Array_t, *Array;
+
+void arr_init_(Array arr, u64 max, u64 us) {
+  arr->max = max, arr->n = 0, arr->ptr = calloc(max, us);
+}
+#define arr_init(T, arr, max) arr_init_(arr, max, sizeof(T))
+
+void arr_cat_(Array arr, const void *ptr, u64 n, u64 us) {
+  if (arr->max < (arr->n + n)) arr->max += arr->max / 2 + 1;
+  if (arr->max < (arr->n + n)) arr->max = arr->n + n;
+  arr->ptr = realloc(arr->ptr, arr->max * us);
+  memcpy((char *)arr->ptr + arr->n * us, ptr, n * us);
+  arr->n += n;
+}
+#define arr_cat(T, arr, ptr, n) arr_cat_(arr, ptr, n, sizeof(T))
+
+void arr_free(Array arr) { free(arr->ptr), arr->n = 0, arr->max = 0; }
+
+typedef struct {
+  u64 v, d;
+} Node_t, *Node;
+
+u64 find_moves(const char *str) {
+  char *wrk = calloc(strlen(str), sizeof(char));
+
+  sscanf(str, "[%[.#]s] %*s", wrk);
+  u64 nl = strlen(wrk);
+
+  /* start state */
+  u64 ss = 0;
+  /* final state */
+  u64 fs = 0;
+  for (u32 i = 0; i < nl; i++) fs += powi(2, i) * (wrk[i] == '#');
+
+  u64 *buttons = calloc(powi(2, nl), sizeof(u64));
+  u64 offset = nl + 3, nb = 0;
+  while (str[offset] != '{') {
+    sscanf(str + offset, "(%[0123456789,]s)", wrk);
+    offset += strlen(wrk) + 3;
+
+    /* convert each button to a bitmask */
+    char *tok = strtok(wrk, ",");
+    while (tok) {
+      buttons[nb] += powi(2, atoi(tok));
+      tok = strtok(NULL, ",");
+    }
+    nb++;
+  }
+
+  Array_t queue;
+  arr_init(Node_t, &queue, 1024);
+
+  /* add the start state */
+  Node_t node = {.v = ss, .d = 0};
+  arr_cat(Node_t, &queue, &node, 1);
+
+  /* Keep adding nodes until we find the final state. New states are generated
+   * by applying the buttons (bitmask) to each of the existing states in the
+   * queue.*/
+  u64 s = 0, e = queue.n, nm = UINT64_MAX;
+  while (1) {
+    for (u64 i = s; i < e; i++) {
+      Node qpi = ((Node)queue.ptr) + i;
+      for (u64 b = 0; b < nb; b++) {
+        node.v = qpi->v ^ buttons[b];
+        node.d = qpi->d + 1;
+        if (node.v == fs) {
+          nm = node.d;
+          goto exit_success;
+        }
+
+        u64 found = 0;
+        for (u64 j = 0; j < queue.n; j++) {
+          Node qpj = ((Node)queue.ptr) + j;
+          if (qpj->v == node.v) {
+            found = 1;
+            break;
+          }
+        }
+        if (!found) arr_cat(Node_t, &queue, &node, 1);
+      }
+    }
+    s = e, e = queue.n;
+  }
+
+exit_success:
+  free(buttons), free(wrk), arr_free(&queue);
+
+  return nm;
+}
+
+u64 solve(const char *fname) {
+  FILE *fp = fopen(fname, "r");
+  abort(!fp, "Unable to open input file!");
+
+  char line[BUFSIZ];
+  u64 A = 0;
+  while (fgets(line, BUFSIZ, fp)) A += find_moves(line);
+  fclose(fp);
+
+  return A;
+}
+
+int main(int argc, char *argv[]) {
+  char fname[PATH_MAX];
+  strncpy(fname, argv[0], PATH_MAX);
+  fname[strlen(fname) - 1] = '\0';
+
+  char *ext = ((argc == 2) ? atoi(argv[1]) : 0) ? ".ex" : ".in";
+  printf("%lld\n", solve(strncat(fname, ext, 3)));
+
+  return 0;
+}

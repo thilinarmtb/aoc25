@@ -1,9 +1,9 @@
 ARGS?=
 
 CC=gcc
-CFLAGS=-g -O2
-BINS=01a 01b 02a 02b 03a 03b 04a 04b 05a 05b 06a 06b 07a 07b 08a 08b 09a\
-		 09b
+CFLAGS=-g -O2 -Wall -Wextra -Wpedantic -std=c11
+BINS=01a 01b 02a 02b 03a 03b 04a 04b 05a 05b 06a 06b 07a 07b 08a 08b\
+		 09a 09b 10a
 
 all: $(BINS)
 
